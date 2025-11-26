@@ -3,12 +3,24 @@ const Player = require("../models/Player");
 
 exports.register = async (req, res) => {
   try {
+
+    const authKey = req.headers["x-game-auth"];
+    if (authKey !== process.env.GAME_SECRET_KEY) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
     const { username, email, password } = req.body;
     const existingEmail = await Player.findOne({ email });
     if (existingEmail) return res.status(400).json({ message: "Email ya registrado" });
 
     const existingUser = await Player.findOne({ username });
     if (existingUser) return res.status(400).json({ message: "Nombre de usuario ya existe" });
+
+    if (username.length < 3 || username.length > 12) {
+      return res.status(400).json({
+        message: "El nombre de usuario es damesiado largo",
+      });
+    }
 
     const player = new Player({ username, email, password });
     await player.save();
